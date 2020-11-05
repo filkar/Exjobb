@@ -2,6 +2,8 @@ import csv
 import pickle
 import sys
 import typing
+import json
+import numpy
 
 from typing import IO
 from typing import List
@@ -111,14 +113,17 @@ def list_output(input_list: List[List]) -> str:
     output_string = output_string.rstrip()
     return output_string
 
-def pickle_files(obj):
+def pickle_files(*pickles):
     with open ("output.pkl", "wb") as file:
-        pickle.dump(obj, file)
+        for item in pickles:
+            pickle.dump(item, file)
 
-def get_glove():
+def get_glove() -> dict:
     with open("glove_matrix.txt", "r") as file:
-        output_string = file.read().replace("\n", "")
-    return output_string
+        output_string = file.read()
+        output_dict = {}
+        output_dict[output_string[1]] = output_string[4:]
+    return output_dict
 
 def join_dicts(train: dict, dev: dict, test: dict) -> dict:
     return train | dev | test
@@ -126,42 +131,22 @@ def join_dicts(train: dict, dev: dict, test: dict) -> dict:
 
 def construct_dicts(train: list, dev: list, test: list) -> None:
     pickle = True
-    output_list = []
 
     speak_train, speak_dev, speak_test = _full_speaker(train, dev, test)
-    output_list.append(join_dicts(speak_train, speak_dev, speak_test))
-
     emo_train, emo_dev, emo_test = _full_emotion(train, dev, test)
-    output_list.append(join_dicts(emo_train, emo_dev, emo_test))
-
     sent_train, sent_dev, sent_test = _full_sentiment(train, dev, test)
-    output_list.append(join_dicts(sent_train, sent_dev, sent_test))
-
-    output_list.append(get_glove())
-
     utter_train, utter_dev, utter_test = _full_utterance(train, dev, test)
-    output_list.append(join_dicts(utter_train, utter_dev, utter_test))
-
     dialogue_id_train, dialogue_id_test, dialogue_id_dev = _full_dialogue_id(train, dev, test) #dialogue_id is in other order in .pkl files given
     
-    output_list.append(dialogue_id_train) 
-    output_list.append(dialogue_id_test) 
-    output_list.append(dialogue_id_dev)
-
-
-    pickle_files(output_list) if pickle else print(output_list)
-
-
-
-    #output(speak_train)
-    #output(speak_dev)
-    #output(speak_test)
-    # output(_full_emotion(train, dev, test))
-    # output(_full_sentiment(train, dev, test))
-    # output(_full_utterance(train, dev, test))
-    # output(_full_dialogue_id(train, dev, test))
-
-
+    pickle_files(
+        join_dicts(speak_train, speak_dev, speak_test),
+        join_dicts(emo_train, emo_dev, emo_test),
+        join_dicts(sent_train, sent_dev, sent_test),
+        join_dicts(utter_train, utter_dev, utter_test),    
+        dialogue_id_train,
+        dialogue_id_test,
+        dialogue_id_dev,
+    )
 
 def _full_speaker(train: list, dev: list, test: list) -> (dict, dict, dict):
     return speaker_dict(train, 0), speaker_dict(dev, int(train[-1][5]) + 1), speaker_dict(test, int(train[-1][5]) + 1 + int(dev[-1][5]) + 1)

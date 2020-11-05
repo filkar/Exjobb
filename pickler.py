@@ -1,9 +1,14 @@
 import pickle
 
 def unpickle_file():
-    pickle_off = open("meld_features_roberta.pkl", "rb")
-    emp = pickle.load(pickle_off, encoding="latin1")
-    print(emp)
+    data = []
+    with open ("output.pkl", "rb") as pickle_off:
+        while True:
+            try:
+                print(pickle.load(pickle_off, encoding="latin1"))
+            except EOFError:
+                break
+
 
 def csv_to_pkl():
     return None
